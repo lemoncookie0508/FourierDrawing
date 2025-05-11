@@ -198,18 +198,14 @@ public class DrawingApp extends LApplication {
             }
         });
         // 시점 변경 단축키
-        parent.shortcuts.put(new KeyCodeCombination(KeyCode.PERIOD, KeyCombination.CONTROL_DOWN), () -> {
-            viewpoint.set((viewpoint.get() + 2) % (points.size() + 1) - 1);
-        });
-        parent.shortcuts.put(new KeyCodeCombination(KeyCode.COMMA, KeyCombination.CONTROL_DOWN), () -> {
-            viewpoint.set((points.size() + 1 + viewpoint.get()) % (points.size() + 1) - 1);
-        });
-        parent.shortcuts.put(new KeyCodeCombination(KeyCode.PERIOD, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN), () -> {
-            viewpoint.set(points.size() - 1);
-        });
-        parent.shortcuts.put(new KeyCodeCombination(KeyCode.COMMA, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN), () -> {
-            viewpoint.set(-1);
-        });
+        parent.shortcuts.put(new KeyCodeCombination(KeyCode.PERIOD, KeyCombination.CONTROL_DOWN),
+                () -> viewpoint.set((viewpoint.get() + 2) % (points.size() + 1) - 1));
+        parent.shortcuts.put(new KeyCodeCombination(KeyCode.COMMA, KeyCombination.CONTROL_DOWN),
+                () -> viewpoint.set((points.size() + 1 + viewpoint.get()) % (points.size() + 1) - 1));
+        parent.shortcuts.put(new KeyCodeCombination(KeyCode.PERIOD, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN),
+                () -> viewpoint.set(points.size() - 1));
+        parent.shortcuts.put(new KeyCodeCombination(KeyCode.COMMA, KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN),
+                () -> viewpoint.set(-1));
         // 무한반복 단축키
         parent.shortcuts.put(new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN), () -> {
             if (isRepeat.get()) {
@@ -222,9 +218,8 @@ public class DrawingApp extends LApplication {
             }
         });
         // 풀스크린 단축키
-        parent.shortcuts.put(new KeyCodeCombination(KeyCode.F11), () -> {
-            ((Stage) parent.getScene().getWindow()).setFullScreen(!((Stage) parent.getScene().getWindow()).isFullScreen());
-        });
+        parent.shortcuts.put(new KeyCodeCombination(KeyCode.F11),
+                () -> ((Stage) parent.getScene().getWindow()).setFullScreen(!((Stage) parent.getScene().getWindow()).isFullScreen()));
 
         // 단축키 안내
         VBox content = new VBox(5);
