@@ -5,14 +5,10 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
-import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
@@ -37,16 +33,26 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DrawingApp extends LApplication {
+    /**
+     * 평면 이동을 위한 마우스 위치가 저장됩니다.
+     */
     private Point2D lastMousePosition;
 
-    private final double bgWidth = 3500;
+    /**
+     * 초기 씬의 가로세로 길이
+     */
+    private final double sceneSize = 700;
+    /**
+     * 초기 평면의 가로세로 길이
+     */
+    private final double bgSize = 3500;
 
     @Override
     protected LPane primaryPane() {
         LNormalPane parent = new LNormalPane();
 
         AnchorPane bg = new AnchorPane();
-        bg.setPrefSize(bgWidth, bgWidth);
+        bg.setPrefSize(bgSize, bgSize);
         bg.setBackground(LUtil.coloredBackground(Color.BLACK));
 
         plane.setPrefSize(bg.getPrefWidth() / 2, bg.getPrefHeight() / 2);
@@ -59,9 +65,8 @@ public class DrawingApp extends LApplication {
         gc = canvas.getGraphicsContext2D();
 
         Group group = new Group(bg, canvas, plane);
-        //Scale scale = new Scale(.25, .25, 0, 0);
         Scale scale = new Scale(1, 1, 0, 0);
-        Translate translate = new Translate((700 - bgWidth) / 2, (700 - bgWidth) / 2);
+        Translate translate = new Translate((sceneSize - bgSize) / 2, (sceneSize - bgSize) / 2);
         group.getTransforms().addAll(translate, scale);
         parent.getChildren().add(group);
 
@@ -117,16 +122,16 @@ public class DrawingApp extends LApplication {
 
         // 클릭 시 점 추가
         group.setOnMouseClicked(e -> {
-            if (e.isControlDown() && e.getButton() == MouseButton.PRIMARY) addPoint(
-                    e.getX() - bg.getPrefWidth() / 2,
-                    bg.getPrefHeight() / 2 - e.getY()
-            );
+            if (e.isControlDown() && e.getButton() == MouseButton.PRIMARY) {
+                Point2D point = plane.sceneToLocal(e.getSceneX(), e.getSceneY());
+                addPoint(point.getX(), point.getY());
+            }
         });
 
         // 시점 표시 원
         Circle viewpointCircle = new Circle(0, 0, 4.5, Color.AQUA);
 
-        // 시간 바인딩
+        // 회전선을 시간에 바인드
         time.addListener((observable, oldVal, newVal) -> {
             if (leaf != null) {
                 leaf.setPhase(newVal.doubleValue());
@@ -177,18 +182,18 @@ public class DrawingApp extends LApplication {
             viewpoint.set(-1);
             double nowWidth = parent.getPrefWidth();
             double nowHeight = parent.getPrefHeight();
-            double ratio_width = nowWidth / bgWidth;
-            double ratio_height = nowHeight / bgWidth;
+            double ratio_width = nowWidth / bgSize;
+            double ratio_height = nowHeight / bgSize;
 
             if (ratio_width < ratio_height) {
                 scale.setX(ratio_width);
                 scale.setY(ratio_width);
                 translate.setX(0);
-                translate.setY((nowHeight - bgWidth * ratio_width) / 2);
+                translate.setY((nowHeight - bgSize * ratio_width) / 2);
             } else {
                 scale.setX(ratio_height);
                 scale.setY(ratio_height);
-                translate.setX((nowWidth - bgWidth * ratio_height) / 2);
+                translate.setX((nowWidth - bgSize * ratio_height) / 2);
                 translate.setY(0);
             }
         });
@@ -254,6 +259,12 @@ public class DrawingApp extends LApplication {
         return parent;
     }
 
+    /**
+     * 단축키 설명 추가
+     * @param text 단축키 역할
+     * @param shortcut 단축키
+     * @return 메뉴 아이템
+     */
     private AnchorPane createMenuItem(String text, String shortcut) {
         Label left = new Label(text);
         Label right = new Label(shortcut);
@@ -271,17 +282,32 @@ public class DrawingApp extends LApplication {
         return box;
     }
 
+    /**
+     * 회전하는 선들이 추가되는 평면. 오른쪽 위가 1사분면이 되도록 변환됨
+     */
     private final AnchorPane plane = new AnchorPane();
+    /**
+     * 캔버스에 선을 그리기 위한 도구. 좌표 변환되지 않았음
+     */
     private GraphicsContext gc;
 
+    /**
+     * 데이터 세트 보관
+     */
     private final ArrayList<Complex> points = new ArrayList<>();
+    /**
+     * 데이터 세트를 시각화하는 점 보관
+     */
     private final ArrayList<Circle> dots = new ArrayList<>();
+    /**
+     * 가장 마지막 회전선
+     */
     private RotatingLine leaf;
 
     /**
      * 점을 추가합니다.
-     * @param x x좌표
-     * @param y y좌표
+     * @param x 수학적 x좌표
+     * @param y 수학적 y좌표
      */
     public void addPoint(double x, double y) {
         if (isRunning.get()) return;
@@ -296,12 +322,12 @@ public class DrawingApp extends LApplication {
     }
 
     /**
-     * 점을 모두 삭제합니다. 그리는 중에는 동작하지 않습니다.
+     * 점을 모두 삭제하고 초기화합니다. 그리는 중에는 동작하지 않습니다.
      */
     public void clearPoints() {
+        clearDrawing();
         if (isRunning.get()) return;
 
-        gc.clearRect(0, 0, bgWidth, bgWidth);
         points.clear();
         for (Circle c : dots) {
             plane.getChildren().remove(c);
@@ -311,16 +337,15 @@ public class DrawingApp extends LApplication {
         viewpoint.set(-1);
         refreshLines();
     }
-
     /**
-     * 그린 그림만을 없애고 초기화합니다. 그리기 시작 전이나 멈춰 있을 때 동작합니다.
+     * 그린 그림만을 없애고 초기화합니다. 그리는 중에는 동작하지 않습니다.
      */
     public void clearDrawing() {
         if (isRunning.get() && !isPaused.get()) return;
         time.set(0);
         isRunning.set(false);
         isPaused.set(false);
-        gc.clearRect(0, 0, bgWidth, bgWidth);
+        gc.clearRect(0, 0, bgSize, bgSize);
     }
 
     /**
@@ -347,18 +372,45 @@ public class DrawingApp extends LApplication {
         }
     }
 
-
+    /**
+     * 선 무작위 색상을 위한 랜덤 객체
+     */
     private final Random r = new Random();
+    /**
+     * 반복 시 지우는 단계를 위한 페인트. 랜덤 색상은 검은색이 아니므로 겹치지 않음
+     */
     private final Color remover = Color.BLACK;
+
+    /**
+     * 현재 시점이 몇 번 인덱스의 노드에 고정되어 있는지를 나타냅니다. 음수일 경우 고정되지 않습니다.
+     */
     private final SimpleIntegerProperty viewpoint = new SimpleIntegerProperty(-1);
 
+    /**
+     * 애니메이션이 시작했는지를 나타냅니다. 일시정지해도 true 입니다.
+     */
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
+    /**
+     * 애니메이션이 일시정지된 상태인지를 나타냅니다.
+     */
     private final AtomicBoolean isPaused = new AtomicBoolean(false);
+    /**
+     * 애니메이션이 무한반복 상태인지를 나타냅니다.
+     */
     private final AtomicBoolean isRepeat = new AtomicBoolean(false);
 
-    double[] last = new double[2]; // 이전 점 좌표
+    /**
+     * 선을 그리기 위해 이전 점의 좌표 보관
+     */
+    private final double[] last = new double[2];
+    /**
+     * 회전선의 위상을 결정하는 시각
+     */
     private final SimpleDoubleProperty time = new SimpleDoubleProperty(0);
 
+    /**
+     * 그림을 그리는 스레드 담당 애니메이션타이머 객체
+     */
     AnimationTimer timer = new AnimationTimer() {
         @Override
         public void handle(long now) {
@@ -387,8 +439,8 @@ public class DrawingApp extends LApplication {
             time.set(t);
 
             // 선 끝 좌표
-            double x = leaf.getEndX() + bgWidth / 2;
-            double y = bgWidth / 2 - leaf.getEndY();
+            double x = leaf.getEndX() + bgSize / 2;
+            double y = bgSize / 2 - leaf.getEndY();
 
             gc.strokeLine(last[0], last[1], x, y);
 
@@ -396,6 +448,10 @@ public class DrawingApp extends LApplication {
             last[1] = y;
         }
     };
+
+    /**
+     * 그림 그리기 시작
+     */
     public void draw() {
         if (leaf == null) return;
         if (isRunning.get()) {
@@ -410,12 +466,12 @@ public class DrawingApp extends LApplication {
             return;
         }
 
-        gc.clearRect(0, 0, bgWidth, bgWidth);
+        gc.clearRect(0, 0, bgSize, bgSize);
         gc.setLineWidth(3);
         gc.setStroke(Color.rgb(r.nextInt(1, 256), r.nextInt(1, 256), r.nextInt(1, 256)));
 
-        last[0] = leaf.getEndX() + bgWidth / 2;
-        last[1] = bgWidth / 2 - leaf.getEndY();
+        last[0] = leaf.getEndX() + bgSize / 2;
+        last[1] = bgSize / 2 - leaf.getEndY();
 
         time.set(0);
         isRunning.set(true);
@@ -423,6 +479,10 @@ public class DrawingApp extends LApplication {
         timer.start();
     }
 
+    /**
+     * 프로그램 속성 설정
+     * @return 속성
+     */
     @Override
     protected Attribute attribute() {
         Attribute attribute = new Attribute();
@@ -430,8 +490,8 @@ public class DrawingApp extends LApplication {
         attribute.title = "푸리에 그림";
         attribute.icon = new Image(LUtil.getResource("images/icon.png"));
 
-        attribute.stageWidth = 700;
-        attribute.stageHeight = 700;
+        attribute.stageWidth = sceneSize;
+        attribute.stageHeight = sceneSize;
 
         attribute.minWidth = 200;
         attribute.minHeight = 200;
