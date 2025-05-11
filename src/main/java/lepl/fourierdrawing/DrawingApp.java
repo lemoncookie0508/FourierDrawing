@@ -180,22 +180,10 @@ public class DrawingApp extends LApplication {
         // 시점 초기화 단축키
         parent.shortcuts.put(new KeyCodeCombination(KeyCode.O, KeyCombination.CONTROL_DOWN), () -> {
             viewpoint.set(-1);
-            double nowWidth = parent.getPrefWidth();
-            double nowHeight = parent.getPrefHeight();
-            double ratio_width = nowWidth / bgSize;
-            double ratio_height = nowHeight / bgSize;
-
-            if (ratio_width < ratio_height) {
-                scale.setX(ratio_width);
-                scale.setY(ratio_width);
-                translate.setX(0);
-                translate.setY((nowHeight - bgSize * ratio_width) / 2);
-            } else {
-                scale.setX(ratio_height);
-                scale.setY(ratio_height);
-                translate.setX((nowWidth - bgSize * ratio_height) / 2);
-                translate.setY(0);
-            }
+            scale.setX(1);
+            scale.setY(1);
+            translate.setX((parent.getPrefWidth() - bgSize) / 2);
+            translate.setY((parent.getPrefHeight() - bgSize) / 2);
         });
         // 시점 변경 단축키
         parent.shortcuts.put(new KeyCodeCombination(KeyCode.PERIOD, KeyCombination.CONTROL_DOWN),
@@ -250,6 +238,16 @@ public class DrawingApp extends LApplication {
             if (e.getButton() == MouseButton.SECONDARY)
                 popup.show(parent.getScene().getWindow(), e.getScreenX(), e.getScreenY());
         });
+
+        /* 직접 점 추가
+        int gap = 100, n = 5, hGap = -15;
+        for (int i = n; i > -n; i--) {
+            addPoint(hGap*(2*i-1) - 200, 2*i*gap - gap / 2);
+            addPoint(hGap*(2*i-1) - 200, 2*i*gap - gap / 2);
+            addPoint(hGap*(2*i-1) + 200, (2*i - 1)*gap - gap / 2);
+            addPoint(hGap*(2*i-1) + 200, (2*i - 1)*gap - gap / 2);
+        }
+        */
 
         return parent;
     }

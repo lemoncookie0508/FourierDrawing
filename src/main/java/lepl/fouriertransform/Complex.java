@@ -82,7 +82,7 @@ public class Complex {
      * @return 라디안 각도
      */
     public double angle() {
-        double d = Math.acos(real / abs());
+        double d = abs() == 0 ? 0 : Math.acos(real / abs());
         if (imaginary < 0) d = - d;
         return d;
     }
