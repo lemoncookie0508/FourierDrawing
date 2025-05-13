@@ -1,6 +1,7 @@
 package lepl.fourierdrawing;
 
 import javafx.animation.AnimationTimer;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.geometry.Insets;
@@ -27,7 +28,6 @@ import lepl.fouriertransform.FrequencyFunction;
 import lepl.lapplication4.LApplication;
 import lepl.lapplication4.LUtil;
 import lepl.lapplication4.lpane.LNormalPane;
-import lepl.lapplication4.lpane.LPane;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -40,16 +40,24 @@ public class DrawingApp extends LApplication {
     private Point2D lastMousePosition;
 
     /**
-     * 초기 씬의 가로세로 길이
-     */
-    private final double sceneSize = 700;
-    /**
-     * 초기 평면의 가로세로 길이
+     * 평면의 가로세로 길이
      */
     private final double bgSize = 3500;
 
-    @Override
-    protected LPane primaryPane() {
+    public DrawingApp() {
+        // 속성 설정
+        setTitle("푸리에 그림");
+        setIcon(new Image(LUtil.getResource("images/icon.png")));
+
+        double sceneSize = 700;
+        setInitialWidth(sceneSize);
+        setInitialHeight(sceneSize);
+        setMinWidth(200);
+        setMinHeight(200);
+
+        setOnCloseRequest(Platform::exit);
+
+        //<editor-fold desc="primaryPane">
         LNormalPane parent = new LNormalPane();
 
         AnchorPane bg = new AnchorPane();
@@ -253,8 +261,8 @@ public class DrawingApp extends LApplication {
             addPoint(hGap*(2*i-1) + 200, (2*i - 1)*gap - gap / 2);
         }
         */
-
-        return parent;
+        //</editor-fold>
+        setPrimaryPane(parent);
     }
 
     /**
@@ -287,7 +295,7 @@ public class DrawingApp extends LApplication {
     /**
      * 캔버스에 선을 그리기 위한 도구. 좌표 변환되지 않았음
      */
-    private GraphicsContext gc;
+    private final GraphicsContext gc;
 
     /**
      * 데이터 세트 보관
@@ -496,25 +504,5 @@ public class DrawingApp extends LApplication {
         isRunning.set(true);
         isPaused.set(false);
         timer.start();
-    }
-
-    /**
-     * 프로그램 속성 설정
-     * @return 속성
-     */
-    @Override
-    protected Attribute attribute() {
-        Attribute attribute = new Attribute();
-
-        attribute.title = "푸리에 그림";
-        attribute.icon = new Image(LUtil.getResource("images/icon.png"));
-
-        attribute.stageWidth = sceneSize;
-        attribute.stageHeight = sceneSize;
-
-        attribute.minWidth = 200;
-        attribute.minHeight = 200;
-
-        return attribute;
     }
 }
