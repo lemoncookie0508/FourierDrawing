@@ -23,6 +23,7 @@ import javafx.stage.Popup;
 import javafx.stage.Stage;
 import lepl.fouriertransform.Complex;
 import lepl.fouriertransform.FourierTransform;
+import lepl.fouriertransform.FrequencyFunction;
 import lepl.lapplication4.LApplication;
 import lepl.lapplication4.LUtil;
 import lepl.lapplication4.lpane.LNormalPane;
@@ -129,7 +130,7 @@ public class DrawingApp extends LApplication {
         });
 
         // 시점 표시 원
-        Circle viewpointCircle = new Circle(0, 0, 4.5, Color.AQUA);
+        Circle viewpointCircle = new Circle(0, 0, 4, Color.AQUA);
 
         // 회전선을 시간에 바인드
         time.addListener((observable, oldVal, newVal) -> {
@@ -168,6 +169,9 @@ public class DrawingApp extends LApplication {
             }
         });
 
+        // 점 제거 단축키
+        parent.shortcuts.put(new KeyCodeCombination(KeyCode.Z, KeyCombination.CONTROL_DOWN),
+                this::undoPoint);
         // 시작 단축키
         parent.shortcuts.put(new KeyCodeCombination(KeyCode.SPACE),
                 this::draw);
@@ -215,6 +219,7 @@ public class DrawingApp extends LApplication {
         content.setStyle("-fx-background-color: white; -fx-border-color: gray;");
         content.getChildren().addAll(
                 createMenuItem("노드 추가", "Ctrl+좌클릭"),
+                createMenuItem("노드 추가 취소", "Ctrl+Z"),
                 createMenuItem("시작/중지", "Space"),
                 createMenuItem("그림 제거", "Ctrl+R"),
                 createMenuItem("초기화", "Ctrl+Shift+R"),
@@ -313,6 +318,22 @@ public class DrawingApp extends LApplication {
 
         refreshLines();
     }
+    /**
+     * 마지막 점을 삭제합니다.
+     */
+    public void undoPoint() {
+        if (isRunning.get()) return;
+
+        int last = points.size() - 1;
+        if (last < 0) return;
+
+        points.remove(last);
+        Circle dot = dots.get(last);
+        plane.getChildren().remove(dot);
+        dots.remove(dot);
+
+        refreshLines();
+    }
 
     /**
      * 점을 모두 삭제하고 초기화합니다. 그리는 중에는 동작하지 않습니다.
@@ -352,12 +373,17 @@ public class DrawingApp extends LApplication {
             leaf = leaf.parent;
         }
 
-        ArrayList<Complex> transformed = FourierTransform.dft(points);
+        // 0, 1, -1, 2, -2, ...
+        FrequencyFunction frequency = (i) -> ((i + 1) >> 1) * (i % 2 == 0 ? -1 : 1);
+        // 0, 1, 2, 3, ...
+        //FrequencyFunction frequency = (i) -> i;
+
+        ArrayList<Complex> transformed = FourierTransform.dft(points, frequency);
         for (int i = 0; i < transformed.size(); i++) {
             leaf = new RotatingLine(
                     leaf,
                     transformed.get(i).abs(),
-                    ((i + 1) >> 1) * (i % 2 == 0 ? -1 : 1),
+                    frequency.get(i),
                     transformed.get(i).angle()
             );
 

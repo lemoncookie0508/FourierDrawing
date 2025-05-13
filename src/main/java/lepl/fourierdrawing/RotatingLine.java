@@ -30,8 +30,8 @@ public class RotatingLine extends Line {
         }
 
         double
-                ex = sx + length * Math.cos(- freq * t + phase_const),
-                ey = sy + length * Math.sin(- freq * t + phase_const);
+                ex = sx + length * Math.cos(freq * t + phase_const),
+                ey = sy + length * Math.sin(freq * t + phase_const);
 
         setStartX(sx);
         setStartY(sy);
