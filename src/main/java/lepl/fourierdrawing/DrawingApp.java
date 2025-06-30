@@ -226,8 +226,8 @@ public class DrawingApp extends LApplication {
         content.setPadding(new Insets(10));
         content.setStyle("-fx-background-color: white; -fx-border-color: gray;");
         content.getChildren().addAll(
-                createMenuItem("노드 추가", "Ctrl+좌클릭"),
-                createMenuItem("노드 추가 취소", "Ctrl+Z"),
+                createMenuItem("데이터 추가", "Ctrl+좌클릭"),
+                createMenuItem("데이터 추가 취소", "Ctrl+Z"),
                 createMenuItem("시작/중지", "Space"),
                 createMenuItem("그림 제거", "Ctrl+R"),
                 createMenuItem("초기화", "Ctrl+Shift+R"),
@@ -251,18 +251,18 @@ public class DrawingApp extends LApplication {
             if (e.getButton() == MouseButton.SECONDARY)
                 popup.show(parent.getScene().getWindow(), e.getScreenX(), e.getScreenY());
         });
+        //</editor-fold>
+        setPrimaryPane(parent);
 
         /* 직접 점 추가
-        int gap = 100, n = 5, hGap = -15;
+        int gap = 100, n = 2, hGap = 10;
         for (int i = n; i > -n; i--) {
             addPoint(hGap*(2*i-1) - 200, 2*i*gap - gap / 2);
             addPoint(hGap*(2*i-1) - 200, 2*i*gap - gap / 2);
             addPoint(hGap*(2*i-1) + 200, (2*i - 1)*gap - gap / 2);
             addPoint(hGap*(2*i-1) + 200, (2*i - 1)*gap - gap / 2);
         }
-        */
-        //</editor-fold>
-        setPrimaryPane(parent);
+        //*/
     }
 
     /**
@@ -316,7 +316,7 @@ public class DrawingApp extends LApplication {
      * @param y 수학적 y좌표
      */
     public void addPoint(double x, double y) {
-        if (isRunning.get()) return;
+        if (isRunning.get() || viewpoint.get() >= 0) return;
 
         points.add(new Complex(x, y));
 
@@ -330,7 +330,7 @@ public class DrawingApp extends LApplication {
      * 마지막 점을 삭제합니다.
      */
     public void undoPoint() {
-        if (isRunning.get()) return;
+        if (isRunning.get() || viewpoint.get() >= 0) return;
 
         int last = points.size() - 1;
         if (last < 0) return;
@@ -339,6 +339,8 @@ public class DrawingApp extends LApplication {
         Circle dot = dots.get(last);
         plane.getChildren().remove(dot);
         dots.remove(dot);
+
+        if (viewpoint.get() == last) viewpoint.set(last - 1);
 
         refreshLines();
     }
